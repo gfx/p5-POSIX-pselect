@@ -39,9 +39,14 @@ This document describes POSIX::pselect version 0.01.
 
 =head2 Functions
 
-=head3 C<< hello() >>
+=head3 C<< pselect($rfdset, $wfdset, $efdset, $timeout, $sigmask) >>
 
-# TODO
+Calls C<pselect(2)>.
+
+The arguments are the same as Perl's C<select()> except for I<$sigmask>.
+
+I<$sigmask> must be a C<POSIX::SigSet> object or an ARRAY reference
+consisting of signal names (e.g. C<< [qw(INT HUP)] >>), or signal numbers.
 
 =head1 DEPENDENCIES
 
@@ -55,7 +60,9 @@ to cpan-RT.
 
 =head1 SEE ALSO
 
-L<perl>
+L<pselect(2)>
+
+L<perlfunc/"select">
 
 =head1 AUTHOR
 
