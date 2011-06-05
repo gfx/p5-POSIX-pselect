@@ -6,7 +6,10 @@ use Test::More;
 use POSIX::pselect;
 
 no_leaks_ok {
-    # use POSIX::pselect here
+    my $a = '';
+    my $b = '';
+    my $c = '';
+    pselect($a, $b, $c, 0, [qw(INT HUP)]);
 };
 
 done_testing;
