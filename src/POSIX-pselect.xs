@@ -1,26 +1,73 @@
 #define NEED_newSVpvn_flags
 #include "xshelper.h"
 
+static void
+setup_sigset(pTHX_ sigset_t* const sigmask, SV* const arg) {
+    SvGETMAGIC(arg);
+    if( sv_isobject(arg) && sv_derived_from(arg, "POSIX::SigSet") && SvIOK(SvRV(arg)) ) {
+        *sigmask = *(sigset_t*)SvIV( SvRV(arg) );
+    }
+    else if(SvOK(arg)) {
+        if(SvROK(arg) && SvTYPE(SvRV(arg)) == SVt_PVAV) {
+            AV* const av  = (AV*)SvRV(arg);
+            I32 const len = av_len(av) + 1;
+            I32 i;
+
+            sigemptyset(sigmask);
+
+            for(i = 0; i < len; i++) {
+                SV** const svp = av_fetch(av, i, FALSE);
+                if(svp) {
+                    if(looks_like_number(*svp)) {
+                        sigaddset(sigmask, (int)SvIV(*svp));
+                    }
+                    else {
+                        int signum;
+                        STRLEN len;
+                        const char* name = SvPV_const(*svp, len);
+                        if(len > 3 && strncmp(name, "SIG", 3) == 0) {
+                            name += 3;
+                        }
+                        signum = whichsig(name);
+                        if(signum < 0) {
+                            Perl_ck_warner(aTHX_ packWARN(WARN_MISC),
+                                "POSIX::pselect: unrecognized signal name \"%s\"", name);
+                        }
+                        else {
+                            sigaddset(sigmask, signum);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            sv_dump(arg);
+            croak("POSIX::pselect: sigset must be an ARRAY  reference or POSIX::SigSet object");
+        }
+    }
+}
+
 /* stolen from pp_sselect() at pp_sys.c */
-void
-do_pselect(pTHX)
+static
+XS(XS_POSIX__pselect)
 {
-    dVAR; dSP; dTARGET;
-    register I32 i;
-    register I32 j;
-    register char *s;
-    register SV *sv;
+    dVAR; dXSARGS; dXSTARG;
+    I32 i;
+    I32 j;
+    char *s;
+    SV *sv;
     NV value;
     I32 maxlen = 0;
     I32 nfound;
-    struct timeval timebuf;
-    struct timeval *tbuf = &timebuf;
+    struct timespec timebuf;
+    struct timespec *tbuf = &timebuf;
+    sigset_t sigmask;
     I32 growsize;
     char *fd_sets[4];
 #if BYTEORDER != 0x1234 && BYTEORDER != 0x12345678
-        I32 masksize;
-        I32 offset;
-        I32 k;
+    I32 masksize;
+    I32 offset;
+    I32 k;
 
 #   if BYTEORDER & 0xf0000
 #        define ORDERBYTE (0x88888888 - BYTEORDER)
@@ -30,7 +77,11 @@ do_pselect(pTHX)
 
 #endif
 
-    SP -= 4;
+    if (items != 5)
+       croak_xs_usage(cv,
+           "rfdset, wfdset, efdset, timeout, sigmask");
+
+    SP -= 5; /* r, w, e, timeout, sigset */
     for (i = 1; i <= 3; i++) {
         SV * const sv = SP[i];
         if (!SvOK(sv))
@@ -87,10 +138,13 @@ do_pselect(pTHX)
             value = 0.0;
         timebuf.tv_sec = (long)value;
         value -= (NV)timebuf.tv_sec;
-        timebuf.tv_usec = (long)(value * 1000000.0);
+        timebuf.tv_nsec = (long)(value * 1000000000.0);
+        //timebuf.tv_usec = (long)(value * 1000000.0);
     }
     else
         tbuf = NULL;
+
+    setup_sigset(aTHX_ &sigmask, SP[5]);
 
     for (i = 1; i <= 3; i++) {
         sv = SP[i];
@@ -121,23 +175,13 @@ do_pselect(pTHX)
 #endif
     }
 
-#ifdef PERL_IRIX5_SELECT_TIMEVAL_VOID_CAST
-    /* Can't make just the (void*) conditional because that would be
-     * cpp #if within cpp macro, and not all compilers like that. */
-    nfound = PerlSock_select(
+    nfound = pselect(
         maxlen * 8,
-        (Select_fd_set_t) fd_sets[1],
-        (Select_fd_set_t) fd_sets[2],
-        (Select_fd_set_t) fd_sets[3],
-        (void*) tbuf); /* Workaround for compiler bug. */
-#else
-    nfound = PerlSock_select(
-        maxlen * 8,
-        (Select_fd_set_t) fd_sets[1],
-        (Select_fd_set_t) fd_sets[2],
-        (Select_fd_set_t) fd_sets[3],
-        tbuf);
-#endif
+        (fd_set*) fd_sets[1],
+        (fd_set*) fd_sets[2],
+        (fd_set*) fd_sets[3],
+        tbuf, NULL);
+
     for (i = 1; i <= 3; i++) {
         if (fd_sets[i]) {
             sv = SP[i];
@@ -156,10 +200,10 @@ do_pselect(pTHX)
     PUSHi(nfound);
     if (GIMME == G_ARRAY && tbuf) {
         value = (NV)(timebuf.tv_sec) +
-                (NV)(timebuf.tv_usec) / 1000000.0;
+                (NV)(timebuf.tv_nsec) / 1000000000.0;
         mPUSHn(value);
     }
-    RETURN;
+    PUTBACK;
 }
 
 
@@ -167,9 +211,9 @@ MODULE = POSIX::pselect    PACKAGE = POSIX::pselect
 
 PROTOTYPES: DISABLE
 
-void
-pselect(rfdset, wfdset, efdset, timeout, sigset)
-CODE:
+BOOT:
 {
-    do_pselect(aTHX);
+        newXS("POSIX::pselect::pselect",
+            XS_POSIX__pselect, (char*)__FILE__);
 }
+
