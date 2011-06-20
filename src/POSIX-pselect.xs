@@ -1,4 +1,3 @@
-#define NEED_newSVpvn_flags
 #include "xshelper.h"
 
 static void
@@ -28,10 +27,12 @@ setup_sigset(pTHX_ sigset_t* const sigmask, SV* const arg) {
                         if(len > 3 && strncmp(name, "SIG", 3) == 0) {
                             name += 3;
                         }
-                        signum = whichsig(name);
+                        signum = whichsig( (char*)name);
                         if(signum < 0) {
-                            Perl_ck_warner(aTHX_ packWARN(WARN_MISC),
-                                "POSIX::pselect: unrecognized signal name \"%s\"", name);
+                            if(ckWARN( packWARN(WARN_MISC) )) {
+                                warner(packWARN(WARN_MISC),
+                                    "POSIX::pselect: unrecognized signal name \"%s\"", name);
+                            }
                         }
                         else {
                             sigaddset(sigmask, signum);
@@ -41,8 +42,7 @@ setup_sigset(pTHX_ sigset_t* const sigmask, SV* const arg) {
             }
         }
         else {
-            sv_dump(arg);
-            croak("POSIX::pselect: sigset must be an ARRAY  reference or POSIX::SigSet object");
+            croak("POSIX::pselect: sigset must be an ARRAY reference or POSIX::SigSet object");
         }
     }
 }
@@ -78,8 +78,7 @@ XS(XS_POSIX__pselect)
 #endif
 
     if (items != 5)
-       croak_xs_usage(cv,
-           "rfdset, wfdset, efdset, timeout, sigmask");
+       croak("Usage: pselect(rfdset, wfdset, efdset, timeout, sigmask)");
 
     SP -= 5; /* r, w, e, timeout, sigset */
     for (i = 1; i <= 3; i++) {
@@ -90,10 +89,13 @@ XS(XS_POSIX__pselect)
             if (SvIsCOW(sv))
                 sv_force_normal_flags(sv, 0);
             if (SvREADONLY(sv) && !(SvPOK(sv) && SvCUR(sv) == 0))
-                Perl_croak_no_modify(aTHX);
+                croak(PL_no_modify);
         }
         if (!SvPOK(sv)) {
-            Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Non-string passed as bitmask");
+            if(ckWARN( packWARN(WARN_MISC) )) {
+                warner(packWARN(WARN_MISC),
+                    "POSIX::pselect: Non-string passed as bitmask");
+            }
             SvPV_force_nolen(sv);        /* force string conversion */
         }
         j = SvCUR(sv);
