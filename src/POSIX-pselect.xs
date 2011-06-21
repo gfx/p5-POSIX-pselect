@@ -182,7 +182,7 @@ XS(XS_POSIX__pselect)
         (fd_set*) fd_sets[1],
         (fd_set*) fd_sets[2],
         (fd_set*) fd_sets[3],
-        tbuf, NULL);
+        tbuf, &sigmask);
 
     for (i = 1; i <= 3; i++) {
         if (fd_sets[i]) {
