@@ -68,4 +68,5 @@ MYMETA\.yml$
 
 src/.*\.c$
 \.swp$
+ppport\.h$
 

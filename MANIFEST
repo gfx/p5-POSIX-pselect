@@ -14,7 +14,6 @@ Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
 META.yml
-ppport.h
 README
 src/POSIX-pselect.xs
 t/000_load.t

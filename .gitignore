@@ -1,5 +1,6 @@
 POSIX-pselect-*
 .*
+*~
 !.gitignore
 !.shipit
 !.dim.pl
