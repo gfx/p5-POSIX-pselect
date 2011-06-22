@@ -89,7 +89,7 @@ XS(XS_POSIX__pselect)
             if (SvIsCOW(sv))
                 sv_force_normal_flags(sv, 0);
             if (SvREADONLY(sv) && !(SvPOK(sv) && SvCUR(sv) == 0))
-                croak(PL_no_modify);
+                croak("%s", PL_no_modify);
         }
         if (!SvPOK(sv)) {
             if(ckWARN( packWARN(WARN_MISC) )) {
