@@ -19,6 +19,7 @@ README
 src/POSIX-pselect.xs
 t/000_load.t
 t/001_basic.t
+t/002_unblock.t
 t/901_leaktrace.t
 xshelper.h
 xt/perlcritic.t
