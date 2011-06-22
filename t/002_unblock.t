@@ -12,10 +12,11 @@ sub doit {
     my $got_usr1 = 0;
     # setup sighandler and block SIGUSR1
     local $SIG{USR1} = sub { $got_usr1 = 1 };
-    POSIX::sigprocmask(POSIX::SIG_BLOCK, POSIX::SigSet->new(POSIX::SIGUSR1));
+    POSIX::sigprocmask(POSIX::SIG_BLOCK(),
+        POSIX::SigSet->new(POSIX::SIGUSR1()));
     # send SIGUSR1 to myself
     my $pid = fork || do {
-        kill POSIX::SIGUSR1, getppid;
+        kill POSIX::SIGUSR1(), getppid;
         exit(0);
     };
     while (wait() != $pid) {}
@@ -25,11 +26,11 @@ sub doit {
     my $ret = POSIX::pselect::pselect(undef, undef, undef, 1, do {
         my $ss = POSIX::SigSet->new;
         $ss->fillset;
-        $ss->delset(POSIX::SIGUSR1);
+        $ss->delset(POSIX::SIGUSR1());
         $ss;
     });
     ok $ret <= 0;
-    is $! + 0, Errno::EINTR;
+    is $! + 0, Errno::EINTR();
     ok $got_usr1;
     my $elapsed = Time::HiRes::time - $now;
     ok $elapsed < 0.5;
