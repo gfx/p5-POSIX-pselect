@@ -17,7 +17,7 @@ __END__
 
 =head1 NAME
 
-POSIX::pselect - Perl extention to do something
+POSIX::pselect - Perl interface to pselect(2)
 
 =head1 VERSION
 
@@ -33,7 +33,11 @@ This document describes POSIX::pselect version 0.01.
 
 =head1 DESCRIPTION
 
-# TODO
+This is an interface to C<pselect(2)>.
+
+Note that we've made sure C<pselect(2)> works atomically B<only in Linux>.
+Other operating systems like MacOSX don't support atomic C<pselect(2)>,
+providing C<pselect(3)> as a non-atomic implementation instead.
 
 =head1 INTERFACE
 
@@ -63,6 +67,10 @@ to cpan-RT.
 L<pselect(2)>
 
 L<perlfunc/"select">
+
+=head1 THANKS TO
+
+@kazuho
 
 =head1 AUTHOR
 
