@@ -1,6 +1,8 @@
 #!perl
 use strict;
 use warnings FATAL => 'all';
+use if $^O ne 'linux' or $ENV{PERL_PSELECT_FORCE_TEST},
+    'Correct pselect() is supported only in Linux';
 use Errno ();
 use POSIX ();
 use POSIX::pselect;
