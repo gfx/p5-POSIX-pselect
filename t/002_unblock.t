@@ -16,11 +16,11 @@ sub doit {
         POSIX::SigSet->new(POSIX::SIGUSR1()));
     # send SIGUSR1 to myself
     my $pid = fork || do {
-        Time::HiRes::sleep(0.1);
         kill POSIX::SIGUSR1(), getppid
             or die "Cannot send SIGUSR1 to the parent: $!";
         exit(0);
     };
+    while (wait() != $pid) {}
     ok ! $got_usr1, 'did not get SIGUSR1';
     # perform a pselect
     my $now = Time::HiRes::time();
@@ -30,7 +30,6 @@ sub doit {
         $ss->delset(POSIX::SIGUSR1());
         $ss;
     });
-    while (wait() != $pid) {}
     cmp_ok $ret, '<=', 0;
     is $! + 0, Errno::EINTR(), '$! == EINTR';
     ok $got_usr1, 'got SIGUSR1';
