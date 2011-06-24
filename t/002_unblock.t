@@ -1,6 +1,9 @@
 #!perl
 use strict;
 use warnings FATAL => 'all';
+use if $ENV{PERL_PSELECT_TEST_DISABLE}, # for shipit on MacOSX
+    'Test::More' => skip_all => 'skip for releasing';
+
 use Errno ();
 use POSIX ();
 use Time::HiRes ();

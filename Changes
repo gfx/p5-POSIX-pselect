@@ -1,5 +1,9 @@
 Revision history for Perl extension POSIX::pselect
 
-0.01 <<SET RELEASE DATE HERE>>
-    - original version; created by /home/gfx/perl5/perlbrew/perls/perl-5.14.0/bin/dim
+0.02 2011-06-24 11:36:09
+    - Fix dependencies
+    - Enable tests all the time
+
+0.01 2011-06-22 11:35:46
+    - original version; created by dim
       at Sun Jun  5 20:17:55 2011.

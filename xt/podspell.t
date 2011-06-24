@@ -2,7 +2,7 @@
 use strict;
 use Test::More;
 
-eval q{ use Test::Spelling; system("which", "spell") == 0 or die };
+eval q{ use Test::Spelling; };
 plan skip_all => q{Test::Spelling or spell(1) is not available.}
     if $@;
 
@@ -99,6 +99,7 @@ whitelist
 Whitelist
 workflow
 XS
+MacOSX
 
 versa # vice versa
 ish   # something-ish
