@@ -8,7 +8,8 @@ BEGIN {
         inc::Module::Install             1.00
         Module::Install::AuthorTests     0.002
         Module::Install::Repository      0.06
-        Module::Install::XSUtil 0.32
+        Module::Install::XSUtil          0.32
+        Test::Requires                   0.06
     );
     my @not_available;
     while(my($mod, $ver) = splice @devmods, 0, 2) {
@@ -29,7 +30,8 @@ use_xshelper;
 cc_warnings;
 cc_src_paths 'src';
 
-test_requires 'Test::More' => '0.88';
+test_requires 'Test::More'     => '0.88';
+test_requires 'Test::Requires' => '0.06';
 
 auto_set_repository;
 
