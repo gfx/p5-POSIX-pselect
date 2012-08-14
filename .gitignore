@@ -12,12 +12,13 @@ Makefile*
 !Makefile.PL
 *blib
 META.yml
-MYMETA.yml
+MYMETA.*
 inc/
 *.out
 *.bak
 *.old
 ppport.h
+xshelper.h
 nytprof*
 cover_db*
 *.gcda
