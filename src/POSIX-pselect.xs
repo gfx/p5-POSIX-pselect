@@ -3,7 +3,7 @@
 static void
 setup_sigset(pTHX_ sigset_t* const sigmask, SV* const arg) {
     SvGETMAGIC(arg);
-#if PERL_VERSION > 15 || PERL_VERSION == 15 && PERL_SUBVERSION > 2
+#if PERL_BCDVERSION > 0x5015002
     if( sv_isobject(arg) && sv_derived_from(arg, "POSIX::SigSet") && SvPOK(SvRV(arg)) ) {
         *sigmask = *(sigset_t*)SvPV_nolen(SvRV(arg));
 #else
